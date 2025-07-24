@@ -1,0 +1,431 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>EnHa TICTACTOE</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom animations */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        .animate-fade-in {
+            animation: fadeIn 0.5s ease-out forwards;
+        }
+        
+        .animate-pulse {
+            animation: pulse 1.5s infinite;
+        }
+    </style>
+</head>
+<body class="bg-[#0d1125] text-white font-sans flex flex-col items-center min-h-screen p-4">
+    <audio id="bgMusic" loop>
+        <source src="bgMusic.mp3" type="audio/mpeg">
+    </audio>
+
+    <h1 class="text-4xl font-bold text-center text-blue-500 animate-fade-in">EnHa TICTACTOE</h1>
+    <p class="text-center text-gray-300 mb-4">Created with ❤️ by Alif F.P</p>
+
+    <!-- Authentication View -->
+    <div id="authView" class="w-full max-w-md bg-gray-800 rounded-lg shadow-xl p-8 animate-fade-in">
+        <div id="loginForm">
+            <h2 class="text-2xl font-bold mb-6 text-center">Login to Play</h2>
+            <div class="mb-4">
+                <label class="block text-gray-300 mb-2" for="loginUsername">Username</label>
+                <input id="loginUsername" type="text" class="w-full px-4 py-2 rounded bg-gray-700 border border-gray-600 focus:border-blue-500 focus:outline-none">
+            </div>
+            <div class="mb-6">
+                <label class="block text-gray-300 mb-2" for="loginPassword">Password</label>
+                <input id="loginPassword" type="password" class="w-full px-4 py-2 rounded bg-gray-700 border border-gray-600 focus:border-blue-500 focus:outline-none">
+            </div>
+            <button id="loginBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded mb-4 transition duration-300">
+                Login
+            </button>
+            <p class="text-center text-gray-400 mb-2">Don't have an account?</p>
+            <button id="showSignupBtn" class="w-full bg-gray-600 hover:bg-gray-700 text-white py-2 px-4 rounded transition duration-300">
+                Create Account
+            </button>
+        </div>
+
+        <div id="signupForm" class="hidden">
+            <h2 class="text-2xl font-bold mb-6 text-center">Create Account</h2>
+            <div class="mb-4">
+                <label class="block text-gray-300 mb-2" for="signupUsername">Username</label>
+                <input id="signupUsername" type="text" class="w-full px-4 py-2 rounded bg-gray-700 border border-gray-600 focus:border-blue-500 focus:outline-none">
+            </div>
+            <div class="mb-4">
+                <label class="block text-gray-300 mb-2" for="signupEmail">Email</label>
+                <input id="signupEmail" type="email" class="w-full px-4 py-2 rounded bg-gray-700 border border-gray-600 focus:border-blue-500 focus:outline-none">
+            </div>
+            <div class="mb-4">
+                <label class="block text-gray-300 mb-2" for="signupPassword">Password</label>
+                <input id="signupPassword" type="password" class="w-full px-4 py-2 rounded bg-gray-700 border border-gray-600 focus:border-blue-500 focus:outline-none">
+            </div>
+            <div class="mb-6">
+                <label class="block text-gray-300 mb-2" for="signupConfirmPassword">Confirm Password</label>
+                <input id="signupConfirmPassword" type="password" class="w-full px-4 py-2 rounded bg-gray-700 border border-gray-600 focus:border-blue-500 focus:outline-none">
+            </div>
+            <button id="signupBtn" class="w-full bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded mb-4 transition duration-300">
+                Sign Up
+            </button>
+            <button id="showLoginBtn" class="w-full bg-gray-600 hover:bg-gray-700 text-white py-2 px-4 rounded transition duration-300">
+                Back to Login
+            </button>
+        </div>
+    </div>
+
+    <!-- PvP Room Selection -->
+    <div id="pvpView" class="hidden w-full max-w-md bg-gray-800 rounded-lg shadow-xl p-8">
+        <h2 class="text-2xl font-bold mb-6 text-center">Player vs Player Rooms</h2>
+        
+        <div class="mb-6 flex space-x-4">
+            <button id="createRoomBtn" class="flex-1 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded transition duration-300">
+                Create New Room
+            </button>
+            <button id="refreshRoomsBtn" class="flex-1 bg-gray-600 hover:bg-gray-700 text-white py-2 px-4 rounded transition duration-300">
+                Refresh Rooms
+            </button>
+        </div>
+        
+        <div id="roomList" class="space-y-2 mb-6">
+            <div class="text-center py-4 text-gray-500">Loading rooms...</div>
+        </div>
+        
+        <button id="backToMenuBtn" class="w-full bg-gray-600 hover:bg-gray-700 text-white py-2 px-4 rounded transition duration-300">
+            Back to Menu
+        </button>
+    </div>
+
+    <!-- Game View -->
+    <div id="gameView" class="hidden w-full max-w-md">
+        <div class="flex justify-between items-center mb-6">
+            <div id="playerX" class="text-lg font-bold px-4 py-2 rounded-lg bg-gray-700">
+                Player X: <span id="playerXName" class="text-blue-400">Waiting...</span>
+            </div>
+            <div id="playerO" class="text-lg font-bold px-4 py-2 rounded-lg bg-gray-700">
+                Player O: <span id="playerOName" class="text-red-400">Waiting...</span>
+            </div>
+        </div>
+        
+        <h2 id="gameStatus" class="text-2xl font-semibold mb-4">Your turn (X)</h2>
+
+        <div id="board" class="grid grid-cols-3 gap-2 p-4 rounded-lg bg-gray-800"></div>
+
+        <button id="leaveGameBtn" class="mt-6 bg-red-600 hover:bg-red-700 px-6 py-2 rounded-lg font-semibold">Leave Game</button>
+    </div>
+
+    <!-- Leaderboard -->
+    <div id="leaderboardView" class="hidden w-full max-w-md bg-gray-800 rounded-lg shadow-xl p-8">
+        <h2 class="text-2xl font-bold mb-6 text-center">Leaderboard</h2>
+        <div id="leaderboardList" class="space-y-2">
+            <div class="text-center py-4 text-gray-500">Loading leaderboard...</div>
+        </div>
+        <button id="backToMenuBtnLeaderboard" class="w-full bg-gray-600 hover:bg-gray-700 text-white py-2 px-4 rounded transition duration-300">
+            Back to Menu
+        </button>
+    </div>
+
+    <script>
+        const game = {
+            currentPlayer: 'X',
+            playerX: '',
+            playerO: '',
+            board: Array(9).fill(''),
+            rooms: [],
+            leaderboard: [],
+            bgMusic: null
+        };
+
+        const gameElements = {
+            gameStatus: document.getElementById('gameStatus'),
+            board: document.getElementById('board'),
+            leaveGameBtn: document.getElementById('leaveGameBtn'),
+        };
+
+        const authElements = {
+            loginForm: document.getElementById('loginForm'),
+            signupForm: document.getElementById('signupForm'),
+            loginUsername: document.getElementById('loginUsername'),
+            loginPassword: document.getElementById('loginPassword'),
+            signupUsername: document.getElementById('signupUsername'),
+            signupEmail: document.getElementById('signupEmail'),
+            signupPassword: document.getElementById('signupPassword'),
+            signupConfirmPassword: document.getElementById('signupConfirmPassword'),
+            loginBtn: document.getElementById('loginBtn'),
+            signupBtn: document.getElementById('signupBtn'),
+            showSignupBtn: document.getElementById('showSignupBtn'),
+            showLoginBtn: document.getElementById('showLoginBtn')
+        };
+
+        const pvpElements = {
+            createRoomBtn: document.getElementById('createRoomBtn'),
+            refreshRoomsBtn: document.getElementById('refreshRoomsBtn'),
+            roomList: document.getElementById('roomList'),
+            backToMenuBtn: document.getElementById('backToMenuBtn'),
+        };
+
+        const leaderboardElements = {
+            leaderboardList: document.getElementById('leaderboardList'),
+            backToMenuBtn: document.getElementById('backToMenuBtnLeaderboard'),
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            game.bgMusic = document.getElementById('bgMusic');
+            game.bgMusic.play().catch(e => console.log('Audio play failed:', e));
+            setupAuthListeners();
+            setupPvPListeners();
+            setupLeaderboardListeners();
+            updateGameStatus();
+            renderBoard();
+        });
+
+        function updateGameStatus() {
+            const name = game.currentPlayer === 'X' ? game.playerX : game.playerO;
+            gameElements.gameStatus.textContent = `${name}'s (${game.currentPlayer}) turn`;
+        }
+
+        function renderBoard() {
+            gameElements.board.innerHTML = '';
+            for (let i = 0; i < 9; i++) {
+                const cell = document.createElement('div');
+                cell.className = 'w-20 h-20 flex items-center justify-center text-3xl font-bold bg-gray-700 rounded-lg cursor-pointer';
+                cell.textContent = game.board[i];
+                cell.addEventListener('click', () => handleMove(i));
+                gameElements.board.appendChild(cell);
+            }
+        }
+
+        function handleMove(index) {
+            if (game.board[index] !== '') return;
+            game.board[index] = game.currentPlayer;
+            game.currentPlayer = game.currentPlayer === 'X' ? 'O' : 'X';
+            updateGameStatus();
+            renderBoard();
+            checkWin();
+        }
+
+        function checkWin() {
+            const winPatterns = [
+                [0, 1, 2], [3, 4, 5], [6, 7, 8], // rows
+                [0, 3, 6], [1, 4, 7], [2, 5, 8], // columns
+                [0, 4, 8], [2, 4, 6]             // diagonals
+            ];
+            
+            for (const pattern of winPatterns) {
+                const [a, b, c] = pattern;
+                if (game.board[a] && game.board[a] === game.board[b] && game.board[a] === game.board[c]) {
+                    alert(`Player ${game.board[a]} wins!`);
+                    resetGame();
+                    return;
+                }
+            }
+            if (game.board.every(cell => cell !== '')) {
+                alert("It's a draw!");
+                resetGame();
+            }
+        }
+
+        function resetGame() {
+            game.board = Array(9).fill('');
+            game.currentPlayer = 'X';
+            renderBoard();
+            updateGameStatus();
+        }
+
+        function setupAuthListeners() {
+            authElements.showSignupBtn.onclick = () => {
+                authElements.loginForm.classList.add('hidden');
+                authElements.signupForm.classList.remove('hidden');
+            };
+            
+            authElements.showLoginBtn.onclick = () => {
+                authElements.signupForm.classList.add('hidden');
+                authElements.loginForm.classList.remove('hidden');
+            };
+            
+            authElements.loginBtn.onclick = () => {
+                const username = authElements.loginUsername.value.trim();
+                const password = authElements.loginPassword.value.trim();
+                
+                if (!username || !password) {
+                    alert('Please enter both username and password');
+                    return;
+                }
+                
+                // Simulate login success
+                game.playerX = username;
+                game.playerO = 'Opponent'; // Placeholder for the opponent
+                showPvPView();
+            };
+            
+            authElements.signupBtn.onclick = () => {
+                const username = authElements.signupUsername.value.trim();
+                const email = authElements.signupEmail.value.trim();
+                const password = authElements.signupPassword.value.trim();
+                const confirmPassword = authElements.signupConfirmPassword.value.trim();
+                
+                if (!username || !email || !password || !confirmPassword) {
+                    alert('Please fill in all fields');
+                    return;
+                }
+                
+                if (password !== confirmPassword) {
+                    alert('Passwords do not match');
+                    return;
+                }
+                
+                // Simulate signup success
+                game.playerX = username;
+                game.playerO = 'Opponent'; // Placeholder for the opponent
+                showPvPView();
+            };
+        }
+
+        function showPvPView() {
+            document.getElementById('authView').classList.add('hidden');
+            document.getElementById('pvpView').classList.remove('hidden');
+            refreshRooms();
+        }
+
+        function setupPvPListeners() {
+            pvpElements.createRoomBtn.onclick = createRoom;
+            pvpElements.refreshRoomsBtn.onclick = refreshRooms;
+            pvpElements.backToMenuBtn.onclick = showAuthView;
+        }
+
+        function createRoom() {
+            const roomName = prompt('Enter room name:');
+            if (!roomName) return;
+
+            // Simulate room creation
+            const newRoom = {
+                id: 'room' + Date.now(),
+                name: roomName,
+                players: 1,
+                maxPlayers: 2
+            };
+
+            game.rooms.push(newRoom);
+            updateRoomList();
+            joinRoom(newRoom.id);
+        }
+
+        function refreshRooms() {
+            // Simulate API call with setTimeout
+            setTimeout(() => {
+                // Mock rooms data
+                game.rooms = [
+                    { id: 'room1', name: 'Quick Match', players: 1, maxPlayers: 2 },
+                    { id: 'room2', name: 'Tournament #1', players: 2, maxPlayers: 2 },
+                    { id: 'room3', name: 'Fun Room', players: 1, maxPlayers: 2 }
+                ];
+                
+                updateRoomList();
+            }, 500);
+        }
+
+        function updateRoomList() {
+            pvpElements.roomList.innerHTML = '';
+            
+            if (game.rooms.length === 0) {
+                pvpElements.roomList.innerHTML = '<div class="text-center py-4 text-gray-500">No rooms available</div>';
+                return;
+            }
+            
+            game.rooms.forEach(room => {
+                const roomElement = document.createElement('div');
+                roomElement.className = 'bg-gray-700 rounded-lg p-4 flex justify-between items-center';
+                roomElement.innerHTML = `
+                    <div>
+                        <h3 class="font-bold">${room.name}</h3>
+                        <p class="text-sm text-gray-400">Players: ${room.players}/${room.maxPlayers}</p>
+                    </div>
+                    <button class="join-room-btn bg-green-600 hover:bg-green-700 text-white py-1 px-3 rounded text-sm" data-room-id="${room.id}">
+                        Join ${room.players < room.maxPlayers ? 'Room' : 'Spectate'}
+                    </button>
+                `;
+                
+                pvpElements.roomList.appendChild(roomElement);
+            });
+            
+            // Add click handlers to join buttons
+            document.querySelectorAll('.join-room-btn').forEach(btn => {
+                btn.onclick = function() {
+                    const roomId = this.getAttribute('data-room-id');
+                    joinRoom(roomId);
+                };
+            });
+        }
+
+        function joinRoom(roomId) {
+            const room = game.rooms.find(r => r.id === roomId);
+            if (!room) return;
+            
+            if (room.players >= room.maxPlayers) {
+                alert('Room is full');
+                return;
+            }
+            
+            game.playerO = 'Opponent'; // Placeholder for the opponent
+            showGameView();
+        }
+
+        function showGameView() {
+            document.getElementById('pvpView').classList.add('hidden');
+            document.getElementById('gameView').classList.remove('hidden');
+            renderBoard();
+            updateGameStatus();
+        }
+
+        function setupLeaderboardListeners() {
+            leaderboardElements.backToMenuBtn.onclick = showAuthView;
+        }
+
+        function showLeaderboard() {
+            document.getElementById('gameView').classList.add('hidden');
+            document.getElementById('leaderboardView').classList.remove('hidden');
+            loadLeaderboard();
+        }
+
+        function loadLeaderboard() {
+            // Simulate loading leaderboard data
+            setTimeout(() => {
+                game.leaderboard = [
+                    { username: 'Player1', wins: 10 },
+                    { username: 'Player2', wins: 8 },
+                    { username: 'Player3', wins: 6 },
+                ];
+                
+                updateLeaderboard();
+            }, 800);
+        }
+
+        function updateLeaderboard() {
+            leaderboardElements.leaderboardList.innerHTML = '';
+            game.leaderboard.forEach(player => {
+                const playerElement = document.createElement('div');
+                playerElement.className = 'bg-gray-700 rounded-lg p-3 mb-2 flex justify-between items-center';
+                playerElement.innerHTML = `
+                    <span class="font-bold">${player.username}</span>
+                    <span class="text-sm text-gray-400">${player.wins} Wins</span>
+                `;
+                leaderboardElements.leaderboardList.appendChild(playerElement);
+            });
+        }
+
+        function showAuthView() {
+            document.getElementById('pvpView').classList.add('hidden');
+            document.getElementById('authView').classList.remove('hidden');
+        }
+    </script>
+</body>
+</html>
